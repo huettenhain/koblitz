@@ -15,6 +15,8 @@ int validtest() {
          *q = pointGen(),
          *p = pointGen();
 
+    assert(isValidPoint(q));
+
     pointMul(q,x,p);
     pointMul(q,y,q);
     pointMul(p,y,p);
