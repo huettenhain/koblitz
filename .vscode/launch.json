@@ -7,6 +7,7 @@
             "request": "launch",
             "miDebuggerPath": "c:\\cygwin64\\bin\\gdb.exe",
             "program": "${workspaceRoot}/test.exe",
+            "args": [ "10" ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",
             "environment": [],
