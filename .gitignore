@@ -1,0 +1,4 @@
+*.o
+*.stackdump
+test.exe
+.vs
