@@ -61,19 +61,17 @@ word *pointDbl(word *R, const word *P) {
 
   if (isZero(P))
     return (R == P) ? R : memcpy(R, P, SIZE_BYTES2);
-
   else if (!memcmp(t1, P, SIZE_BYTES))
     return pointZero(R);
 
   polyDiv(Y(R), Y(P), X(P));
-  polyAddTo(Y(R), X(P));
-  R[SIZE_WORDS] ^= 1;
-
-  polySqr(t2, X(P)); /* t2 = x^2  */
-  polyInv(t1, t2);
-  polyAddTo(t1, t2); /* t1 = x'   */
-  polyMul(Y(R), Y(R), t1);
-  polyAddTo(Y(R), t2);
+  polyAddTo(Y(R), X(P)); // Y(R) contains l = y/x + x 
+  R[SIZE_WORDS] ^= 1; // Y(R) contains l+1 
+  polySqr(t2, X(P)); // t2 contains x^2 
+  polyInv(t1, t2); // t1 contains inverse of x^2
+  polyAddTo(t1, t2); // t1 contains x'
+  polyMul(Y(R), Y(R), t1); // Y(R) contains (l+1)*x'
+  polyAddTo(Y(R), t2); // Y(R) contains y' = (l+1)*x' + x^2
 
   return memcpy(R, t1, SIZE_BYTES);
 }
@@ -180,7 +178,7 @@ word *pointMul(word *R, const word *k, const word *P) {
         if (--j) {                   /* if j was -1, add 1 to -|a|  */
           *a -= 1;                   /* or just subtract 1 from |a| */
         } else
-          do /* otherwise, add 1 to |a|     */
+          do /* otherwise, add 1 to |a| */
             if (++a[j++]) break;
           while (j < SIZE_WORDS);
         iRShift(a, SIZE_WORDS); /* perform division by 2       */
