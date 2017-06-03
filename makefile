@@ -6,7 +6,7 @@ RFLAGS = -O2
 
 SOURCES = *.c
 HEADERS = *.h
-OBJECTS = curve.o binfields.o test.o
+OBJECTS = curve.o binfields.o integers.o test.o
 
 debug: $(OBJECTS)
 	$(CC) $(CFLAGS) $(DFLAGS) -o $(BINARY) $(OBJECTS)

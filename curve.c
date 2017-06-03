@@ -1,8 +1,10 @@
-#include "curve.h"
 #include <assert.h>
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "curve.h"
+#include "integers.h"
 
 #define Y(__P) ((__P) + SIZE_WORDS)
 #define X(__P) (__P)
@@ -129,112 +131,65 @@ word *pointSub(word *R, const word *P, const word *Q) {
   return pointAdd(R, P, pointNeg(N));
 }
 
-
-void iAdd(word *a, word *b, word s) {
-  word c, i;
-  for (c = i = 0; i < s; i++) {
-    word tmp = a[i] + b[i], cry = (tmp < a[i]) ? (tmp < b[i]) : 0;
-    a[i] += b[i];
-    c = (c && !++a[i]) || cry;
+word* pointSqr(word* P) {
+  if (!isZero(P)) {
+    polySqr(X(P),X(P));
+    polySqr(Y(P),Y(P));
   }
+  return P;
 }
-
-void iNeg(word *a, word s) {
-  word i;
-  for (i = 0; i < s; i++) a[i] = ~a[i];
-  i = 0;
-  do
-    if (++a[i++]) break;
-  while (i < s);
-}
-
-/* For an explanation of what on Earth is going on with this Point multi-
-   plication routine, refer to
-
-   Hankerson, Menezes, Vanstone - Guide to Elliptic Curve Cryptography,
-   specifically Section 3.4.2.
-
-   **********************************************************************/
 
 word *pointMul(word *R, const word *k, const word *P) {
-  word m[SIZE_WORDS] = {0}, n[SIZE_WORDS] = {0};
+  word m[SIZE_WORDS] = {0}, 
+       n[SIZE_WORDS] = {0};
   word Q[SIZE_WORDS2];
-  word j, *a = n, *b = m, *t;
+  word *a = n, *b = m, *t;
   memcpy(Q, P, SIZE_BYTES2);
   memcpy(n, k, SIZE_BYTES);
 
-  for (pointZero(R); !polyIsZero(n) || !polyIsZero(m);
-       polySqr(X(Q), X(Q)), polySqr(Y(Q), Y(Q))) {
-#define NF (WORDSIZE - 1)
+  pointZero(R);
+
+  while ( !polyIsZero(n) || !polyIsZero(m) ) {
     if (*a & 1) {
-      j = (*a - (*b << 1)) % 4;
-      if (j == 3)
-        pointSub(R, R, Q);
-      else
-        pointAdd(R, R, Q);
-
-      if (a[SIZE_WORDS - 1] >> NF) { /* if a is negative            */
-        iNeg(a, SIZE_WORDS);         /* we consider |a|             */
-        if (--j) {                   /* if j was -1, add 1 to -|a|  */
-          *a -= 1;                   /* or just subtract 1 from |a| */
-        } else
-          do /* otherwise, add 1 to |a| */
-            if (++a[j++]) break;
-          while (j < SIZE_WORDS);
-        iRShift(a, SIZE_WORDS); /* perform division by 2       */
-      } else {                  /* if a is not negative        */
-        if (j == 3) {           /* and if j was -1, add 1 to a */
-          j = 0;
-          do
-            if (++a[j++]) break;
-          while (j < SIZE_WORDS);
-        } else
-          *a -= 1;              /* otherwise, add -1 instead   */
-        iRShift(a, SIZE_WORDS); /* division by 2               */
-        iNeg(a, SIZE_WORDS);    /* and calculate negative      */
-      }
-      iAdd(b, a, SIZE_WORDS);
-    } else {
-      /* don't look at this. */
-      if (a[SIZE_WORDS - 1] >> NF) {
-        iNeg(a, SIZE_WORDS);    /* data: (-a      ,  b         ) */
-        iRShift(a, SIZE_WORDS); /* data: (-a/2    ,  b         ) */
-        iNeg(b, SIZE_WORDS);    /* data: (-a/2    , -b         ) */
-        iAdd(b, a, SIZE_WORDS); /* data: (-a/2    , -b   - a/2 ) */
-        if (b[SIZE_WORDS - 1] >> NF) {
-          iNeg(b, SIZE_WORDS);    /* data: (-a/2    ,  b   + a/2 ) */
-          iRShift(b, SIZE_WORDS); /* data: (-a/2    ,  b/2 + a/4 ) */
-          iAdd(a, b, SIZE_WORDS); /* data: ( b/2-a/4,  b/2 + a/4 ) */
-          iNeg(a, SIZE_WORDS);    /* data: (-b/2+a/4,  b/2 + a/4 ) */
-          iNeg(b, SIZE_WORDS);    /* data: (-b/2+a/4, -b/2 - a/4 ) */
-        } else {
-          iRShift(b, SIZE_WORDS); /* data: (-a/2    , -b/2 - a/4 ) */
-          iNeg(a, SIZE_WORDS);    /* data: ( a/2    , -b/2 - a/4 ) */
-          iAdd(a, b, SIZE_WORDS); /* data: (-b/2+a/4, -b/2 - a/4 ) */
-        }
+      word w[SIZE_WORDS];
+      memcpy(w,b,SIZE_BYTES);
+      iLShift(w);
+      iNeg(w);
+      iAdd(w,a);
+      int v = 2 - (int)(*w % 4);
+      if (v<0) pointSub(R, R, Q);
+      if (v>0) pointAdd(R, R, Q);
+      if (iIsNegative(a)) {
+        iNeg(a);
+        if (v<0) *a -= 1; 
+        else iInc(a);
       } else {
-        iRShift(a, SIZE_WORDS); /* data: ( a/2    ,  b         ) */
-        iAdd(b, a, SIZE_WORDS); /* data: ( a/2    ,  b   + a/2 ) */
-        if (b[SIZE_WORDS - 1] >> NF) {
-          iNeg(b, SIZE_WORDS);    /* data: ( a/2    , -b   - a/2 ) */
-          iRShift(b, SIZE_WORDS); /* data: ( a/2    , -b/2 - a/4 ) */
-          iAdd(a, b, SIZE_WORDS); /* data: (-b/2+a/4, -b/2 - a/4 ) */
-        } else {
-          iRShift(b, SIZE_WORDS); /* data: ( a/2    ,  b/2 + a/4 ) */
-          iNeg(b, SIZE_WORDS);    /* data: ( a/2    , -b/2 - a/4 ) */
-          iAdd(a, b, SIZE_WORDS); /* data: (-b/2+a/4, -b/2 - a/4 ) */
-        }
+        if (v>0) *a -= 1; 
+        else iInc(a);
+        iNeg(a);
       }
-
-      polySqr(X(Q), X(Q));
-      polySqr(Y(Q), Y(Q));
+    } else {
+      iNeg(a);
     }
-
+    iRShift(a);
+    iAdd(b,a);
+    pointSqr(Q);
     t = a, a = b, b = t;
   }
   return R;
-#undef NF
 }
 
 #undef X
 #undef Y
+
+word* pointMul_Naive(word* R, const word* k, const word* P) {
+    word Q[SIZE_WORDS2];
+    memcpy(Q,P,SIZE_BYTES2);
+    pointZero(R);
+    for (int i=0;i<deg(k);i++) {
+        if ((k[i/WORDSIZE]>>(i%WORDSIZE))&1) 
+            pointAdd(R,R,Q);
+        pointDbl(Q,Q);
+    }
+    return R;
+}
