@@ -137,11 +137,23 @@ word* pointSqr(word* P) {
   return P;
 }
 
+/* This Point Multiplication Routine uses the tau-adic normal form.
+
+   References:
+   1. Hankerson, Menezes, Vanstone
+      Guide to Elliptic Curve Cryptography 
+      Algorithm 3.61 and (3.33)
+   2. Hoffstein, Pipher, Silverman
+      An Introduction to Mathematical Cryptography
+      Exercise 5.23 and discussion on page 314
+
+**********************************************************************/
+
 word *pointMul(word *R, const word *k, const word *P) {
   word m[SIZE_WORDS] = {0}, 
        n[SIZE_WORDS] = {0};
   word Q[SIZE_WORDS2];
-  word *a = n, *b = m, *t;
+  word *a = n, *b = m;
   memcpy(Q, P, SIZE_BYTES2);
   memcpy(n, k, SIZE_BYTES);
 
@@ -172,7 +184,9 @@ word *pointMul(word *R, const word *k, const word *P) {
     iRShift(a);
     iAdd(b,a);
     pointSqr(Q);
-    t = a, a = b, b = t;
+
+    word * t = a;
+    a = b, b = t;
   }
   return R;
 }
