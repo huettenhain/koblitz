@@ -62,21 +62,25 @@ void validtest() {
   free(x);
 }
 
-void exchangetest() {
-  word *x = polyGen(), *p = pointGen();
-
+void exchangetest(
+  word* (*routine)(word*,const word*,const word*),
+  unsigned int rounds
+) {
+  word *x = polyGen(), 
+       *p = pointGen();
   assert(x && p);
-
-  pointMul(p, polyRand(x), p);
-  pointMul(p, x, p);
-
+  for (unsigned int i=0; i<rounds; i++) {
+    polyRand(x);
+    routine(p, x, p);
+    routine(p, x, p);
+  }
   free(p);
   free(x);
 }
 
 int main(int argc, char **argv) {
   double timing = 0;
-  double d, delta = 0;
+  double delta = 0;
   unsigned int s = 0;
   unsigned int tests;
   srand(time(NULL));
@@ -84,17 +88,21 @@ int main(int argc, char **argv) {
   assert(argc == 2);
   tests = atoi(argv[1]);
 
-  for (s = 0; s < tests; s++) {
+  for (s = 0; s < 5; s++) {
     validtest();
   }
 
-  for (s = 0; s < 5; s++) {
-    timing = (double)clock();
-    exchangetest();
-    d = (clock() - timing) / CLOCKS_PER_SEC;
-    delta += d;
-    printf("Key Exchange in %0.3f seconds (delta %0.3f).\n", d, delta / s);
-  }
+  printf("Naive Method Average: ");
+  timing = (double)clock();
+  exchangetest(pointMul_Naive, tests);
+  delta = (clock() - timing) / CLOCKS_PER_SEC;
+  printf("%.3f seconds\n", delta/tests);
+
+  printf("T-NAF Method Average: ");
+  timing = (double)clock();
+  exchangetest(pointMul, tests);
+  delta = (clock() - timing) / CLOCKS_PER_SEC;
+  printf("%.3f seconds\n", delta/tests);
 
   return 0;
 }
