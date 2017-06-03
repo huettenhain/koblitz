@@ -2,6 +2,8 @@
 #define _BINFIELDS__H
 
 #ifdef _MSC_VER
+ typedef   signed __int64  int64_t;
+ typedef   signed __int32  int32_t;
  typedef unsigned __int64 uint64_t;
  typedef unsigned __int32 uint32_t;
  typedef unsigned __int16 uint16_t;
@@ -10,7 +12,7 @@
 # include <stdint.h>
 #endif
 
-#if _WIN64
+#if defined(_WIN64) || defined(_M_X64) || defined(_M_AMD64) || defined(_M_IA64) 
 # define BITS64
 #endif
 #if __GNUC__
@@ -20,11 +22,11 @@
 #endif
 
 #ifdef BITS64
- typedef  int64_t signed_word; 
+ typedef  int64_t sw; 
  typedef uint64_t word;
 #define WORDSIZE  0x40
 #else
- typedef  int32_t signed_word; 
+ typedef  int32_t sw; 
  typedef uint32_t word;
 #define WORDSIZE  0x20
 #endif 
