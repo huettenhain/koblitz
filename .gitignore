@@ -1,4 +1,5 @@
 *.o
+*.obj
 *.stackdump
 test.exe
 .vs

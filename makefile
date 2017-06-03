@@ -14,9 +14,12 @@ release: $(SOURCES) $(HEADERS)
 	$(CC) $(CFLAGS) -o $(BINARY) $(SOURCES) $(RFLAGS) 
 clean:
 	-rm $(OBJECTS)
+	-rm *.obj
 	-rm *.stackdump
+microsoft:
+	cl *.c /Ox /link /out:$(BINARY).exe
 
-.PHONY: debug release clean
+.PHONY: debug mscmicrosoft release clean
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) $(DFLAGS) -c -o $@ $< 
