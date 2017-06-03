@@ -42,9 +42,6 @@ static const hword POW[1 << BYTESIZE] = {
 word *__reduce(word *c) {
   int i;
   word T;
-#if 0
-    if (deg(&c[SIZE_WORDS]) || deg(c)>SIZE_BITS) {
-#endif
   for (i = SIZE_WORDS2 - 1; i >= SIZE_WORDS; i--) {
     T = c[i];
     c[i - SIZE_WORDS] ^= (T << 5) ^ (T << 7) ^ (T << 10) ^ (T << 15);
@@ -54,9 +51,6 @@ word *__reduce(word *c) {
   T = c[SIZE_WORDS - 1] >> (WORDSIZE - 5);
   c[0] = c[0] ^ T ^ (T << 2) ^ (T << 5) ^ (T << 10);
   c[SIZE_WORDS - 1] = c[SIZE_WORDS - 1] & EMPTY_MASK;
-#if 0
-    }
-#endif
   return c;
 }
 
@@ -77,25 +71,24 @@ word *polyMul(word *r, const word *a, const word *b) {
   return memcpy(r, __reduce(c), SIZE_BYTES);
 }
 
+inline static word __low_byte_pow(word t) {
+  return (word) POW[ t & ((1 << BYTESIZE) - 1) ];
+}
 word *polySqr(word *r, const word *a) {
   word i, c[SIZE_WORDS2];
   for (i = 0; i < SIZE_WORDS; i++) {
     word t = a[i], x;
     int j;
-#define LOBYTE(__t) (__t & ((1 << BYTESIZE) - 1))
-#define LOOPS (WORDSIZE / HWSIZE)
-    for (x = 0, j = 0; j < LOOPS; j++) {
-      x += (word)POW[LOBYTE(t)] << (j * HWSIZE);
+    for (x = 0, j = 0; j < HW_PER_W; j++) {
+      x += __low_byte_pow(t) << (j * HWSIZE);
       t >>= BYTESIZE;
     }
     c[2 * i] = x;
-    for (x = 0, j = 0; j < LOOPS; j++) {
-      x += (word)POW[LOBYTE(t)] << (j * HWSIZE);
+    for (x = 0, j = 0; j < HW_PER_W; j++) {
+      x += __low_byte_pow(t) << (j * HWSIZE);
       t >>= BYTESIZE;
     }
     c[2 * i + 1] = x;
-#undef LOOPS
-#undef LOBYTE
   }
   return memcpy(r, __reduce(c), SIZE_BYTES);
 }

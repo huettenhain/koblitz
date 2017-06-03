@@ -10,9 +10,6 @@
 # include <stdint.h>
 #endif
 
-typedef uint8_t  byte;
-#define BYTESIZE 0x08
-
 #if _WIN64
 # define BITS64
 #endif
@@ -23,30 +20,28 @@ typedef uint8_t  byte;
 #endif
 
 #ifdef BITS64
- typedef  int64_t    signed_word; 
- typedef uint64_t    word;
- typedef uint16_t    hword;
-# define HWSIZE      0x10
-# define WORDSIZE    0x40
-# define SIZE_WORDS  0x0009
-# define SIZE_WORDS2 0x0012
+ typedef  int64_t signed_word; 
+ typedef uint64_t word;
+#define WORDSIZE  0x40
 #else
- typedef  int32_t    signed_word; 
- typedef uint32_t    word;
- typedef uint16_t    hword;
-# define HWSIZE      0x10
-# define WORDSIZE    0x20
-# define SIZE_WORDS  0x0012
-# define SIZE_WORDS2 0x0024
+ typedef  int32_t signed_word; 
+ typedef uint32_t word;
+#define WORDSIZE  0x20
 #endif 
+
+typedef uint16_t hword;
+typedef uint8_t  byte;
+#define BYTESIZE 0x08
+#define HWSIZE   (2*BYTESIZE)
+#define HW_PER_W (WORDSIZE / HWSIZE)
 
 #define F571        (((word)1)<<(WORDSIZE-5))
 #define EMPTY_MASK  (F571-1)
-
-#define SIZE_BYTES  0x0048
-#define SIZE_BYTES2 0x0090
-#define SIZE_BITS   0x023a
-#define SIZE_BITS2  0x0474
+#define SIZE_BITS   576
+#define SIZE_BYTES  (SIZE_BITS/BYTESIZE)
+#define SIZE_WORDS  (SIZE_BITS/WORDSIZE)
+#define SIZE_WORDS2 (2*SIZE_WORDS)
+#define SIZE_BYTES2 (2*SIZE_BYTES)
 
 void iLShiftN(word *a, word s, word n);
 void iRShiftN(word *a, word s, word n);
