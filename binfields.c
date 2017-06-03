@@ -68,7 +68,8 @@ word *polyMul(word *r, const word *a, const word *b) {
   for (k = WORDSIZE - 1; k; k--) {
     for (j = 0; j < SIZE_WORDS; j++)
       if ((a[j] >> k) & 1) polyAddTo(&c[j], b);
-    iLShift(c, SIZE_WORDS2);
+    iLShiftN(c, SIZE_WORDS2, 1);
+    // TODO: possibly speed this up?
   }
 
   for (j = 0; j < SIZE_WORDS; j++)
@@ -193,26 +194,6 @@ void iRShiftN(word *a, word s, word n) {
     }
     *a >>= n;
   }
-}
-
-void iRShift(word *a, word s) {
-  word *p = a + s - 1;
-  while (a < p) {
-    *a >>= 1;
-    a++;
-    *(a - 1) |= (*a & 1) << (WORDSIZE - 1);
-  }
-  *a >>= 1;
-}
-
-void iLShift(word *a, word s) {
-  word *p = a + s - 1;
-  while (p > a) {
-    *p <<= 1;
-    p--;
-    *(p + 1) |= *p >> (WORDSIZE - 1);
-  }
-  *p <<= 1;
 }
 
 word *polyGen() { return calloc(SIZE_WORDS, sizeof(word)); }

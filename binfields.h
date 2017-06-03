@@ -21,6 +21,7 @@ typedef uint8_t  byte;
 # define SIZE_WORDS  0x0009
 # define SIZE_WORDS2 0x0012
 #else
+ typedef  int32_t    signed_word; 
  typedef uint32_t    word;
  typedef uint16_t    hword;
 # define HWSIZE      0x10
@@ -39,8 +40,6 @@ typedef uint8_t  byte;
 
 void iLShiftN(word *a, word s, word n);
 void iRShiftN(word *a, word s, word n);
-void iRShift (word *a, word s);
-void iLShift (word *a, word s);
 
 int      deg(const word *a);
 int      polyIsZero(word *a);
