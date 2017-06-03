@@ -92,6 +92,11 @@ int main(int argc, char **argv) {
     validtest();
   }
 
+  printf("Bits Per Machine Word: %3d\n"
+         "Words Per Field Elem.: %3d\n"
+         "Words Per Curve Point: %3d\n\n",
+    WORDSIZE, SIZE_WORDS, SIZE_WORDS2);
+
   printf("Naive Method Average: ");
   timing = (double)clock();
   exchangetest(pointMul_Naive, tests);

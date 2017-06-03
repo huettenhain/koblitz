@@ -13,10 +13,20 @@
 typedef uint8_t  byte;
 #define BYTESIZE 0x08
 
+#if _WIN64
+# define BITS64
+#endif
+#if __GNUC__
+# if __x86_64__ || __ppc64__
+#  define BITS64
+# endif
+#endif
+
 #ifdef BITS64
+ typedef  int64_t    signed_word; 
  typedef uint64_t    word;
- typedef uint32_t    hword;
-# define HWSIZE      0x20
+ typedef uint16_t    hword;
+# define HWSIZE      0x10
 # define WORDSIZE    0x40
 # define SIZE_WORDS  0x0009
 # define SIZE_WORDS2 0x0012
