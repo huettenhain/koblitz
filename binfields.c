@@ -243,22 +243,6 @@ void polyLShift(word *a, unsigned long s, unsigned long n) {
   }
 }
 
-void polyRShift(word *a, unsigned long s, unsigned long n) {
-  word x, *p = a + s - 1;
-  if ((x = n / WORDSIZE) != 0) {
-    memmove(a, a + x, (s - x) * sizeof(word));
-    memset(a + x, 0, x * sizeof(word));
-    p -= x;
-  }
-  if (n %= WORDSIZE) {
-    for (x = (((word)1) << n) - 1; a < p; a++) {
-      *a >>= n;
-      *a |= *(a + 1) & x;
-    }
-    *a >>= n;
-  }
-}
-
 word *polyGen() { return calloc(SIZE_WORDS, sizeof(word)); }
 
 word *polyRand(word *p) {

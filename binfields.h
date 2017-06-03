@@ -46,7 +46,6 @@ typedef uint8_t  byte;
 #define SIZE_BYTES2 (2*SIZE_BYTES)
 
 void     polyLShift(word *a, unsigned long size, unsigned long places);
-void     polyRShift(word *a, unsigned long size, unsigned long places);
 
 unsigned int
         polyDeg(const word *a);
