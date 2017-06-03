@@ -1,9 +1,8 @@
 
-#include "binfields.h"
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+
+#include "binfields.h"
 
 /* Precomputed Array. For each byte (a1,a2,...,a8), this
    array contains the halfword (a1,0,a2,0,a3,0,...,0,a8).
