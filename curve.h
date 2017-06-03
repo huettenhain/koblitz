@@ -16,10 +16,8 @@ word*  pointZero(word* P);
 word*  pointSqr(word* P);
 
 int    isZero(const word* P);
+int    isValidPoint(const word* P);
 
-#ifdef _DEBUG
-  int  isValidPoint(const word* P);
-#endif
 
 word*  pointDup(const word* P);
 word*  pointGen();

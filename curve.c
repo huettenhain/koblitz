@@ -18,7 +18,6 @@ uint32_t PGEN[] = {
     0xF772AEDC, 0x4FBEBBB9, 0xAC44AEA7, 0x9D4979C0, 0x006D8A2C, 0xFFC61EFC,
     0x9F307A54, 0x4DD58CEC, 0x3BCA9531, 0x4F4AEADE, 0x7F4FBF37, 0x0349DC80};
 
-#ifdef _DEBUG
 int isValidPoint(const word *P) {
   /* y^2+xy=x^3+1 */
   word t[SIZE_WORDS] = {0}, l[SIZE_WORDS] = {0};
@@ -32,7 +31,6 @@ int isValidPoint(const word *P) {
 
   return !memcmp(t, l, SIZE_BYTES);
 }
-#endif
 
 word *pointDup(const word *P) {
   return memcpy(malloc(SIZE_WORDS2 * sizeof(word)), P, SIZE_BYTES2);
