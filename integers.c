@@ -34,7 +34,7 @@ void iRShift(word *a) {
     a++;
     *(a - 1) |= (*a & 1) << (WORDSIZE - 1);
   }
-  *((signed_word*)a) >>= 1;
+  *((sw*)a) >>= 1;
 }
 
 void iLShift(word *a) {
