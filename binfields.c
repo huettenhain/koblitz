@@ -1,13 +1,76 @@
-
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 #include "binfields.h"
+
+unsigned int __log2(word x);
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1300)
+# include <intrin.h>
+# pragma message("Using BitScanReverse Intrinsic for MSC.")
+# ifdef BITS64
+#  pragma intrinsic(_BitScanReverse64)
+#  define BSR _BitScanReverse64
+# else
+#  pragma intrinsic(_BitScanReverse)
+#  define BSR _BitScanReverse
+# endif
+  inline unsigned int __log2(word x) {
+    word log2;
+    BSR( &log2, (word)x );
+    return log2;
+  }
+#elif defined(__GNUC__) && ((__GNUC__ >= 4) || (__GNUC__ == 3 && __GNUC_MINOR__ >= 4))
+  inline unsigned int __log2(word x) {
+    return WORDSIZE-1-__builtin_clzll(x);
+  }
+#else 
+// DeBruijn method: https://stackoverflow.com/q/11376288
+//  thanks to Desmond Hume
+# ifdef BITS64
+  unsigned int __log2(word x) {
+    static const unsigned char _bitpos[64] = {
+      63,  0, 58,  1, 59, 47, 53,  2,
+      60, 39, 48, 27, 54, 33, 42,  3,
+      61, 51, 37, 40, 49, 18, 28, 20,
+      55, 30, 34, 11, 43, 14, 22,  4,
+      62, 57, 46, 52, 38, 26, 32, 41,
+      50, 36, 17, 19, 29, 10, 13, 21,
+      56, 45, 25, 31, 35, 16,  9, 12,
+      44, 24, 15,  8, 23,  7,  6,  5 };
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    return _bitpos[(((x - (x >> 1))*0x07EDD5E59A4E28C2ULL)) >> 58];
+  }
+# else 
+  unsigned int __log2(word x) {
+    static const unsigned char _bitpos[32] = {
+      0,  9,  1, 10, 13, 21, 2, 29,
+     11, 14, 16, 18, 22, 25, 3, 30,
+      8, 12, 20, 28, 15, 17, 24, 7, 
+     19, 27, 23,  6, 26,  5,  4, 31 };
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return _bitpos[(x * 0x07C4ACDDU) >> 27];
+  }
+# endif 
+#endif
 
 /* Precomputed Array. For each byte (a1,a2,...,a8), this
    array contains the halfword (a1,0,a2,0,a3,0,...,0,a8).
    This is used for fast squaring. */
-
 static const hword POW[1 << BYTESIZE] = {
     0x0000, 0x0001, 0x0004, 0x0005, 0x0010, 0x0011, 0x0014, 0x0015, 0x0040,
     0x0041, 0x0044, 0x0045, 0x0050, 0x0051, 0x0054, 0x0055, 0x0100, 0x0101,
@@ -100,16 +163,21 @@ word *polyDiv(word *c, const word *a, const word *b) {
 
 word *polyInv(word *r, const word *a) {
   word *t;
-  int j;
+  unsigned int j, du, dv, dt;
 
-  word x[5 * SIZE_WORDS] = {0}, *v = &x[1 * SIZE_WORDS],
-             *u = &x[2 * SIZE_WORDS], *g = &x[3 * SIZE_WORDS],
-             *f = &x[4 * SIZE_WORDS];
+  word x[5 * SIZE_WORDS] = {0}, 
+      *v = &x[1 * SIZE_WORDS],
+      *u = &x[2 * SIZE_WORDS], 
+      *g = &x[3 * SIZE_WORDS],
+      *f = &x[4 * SIZE_WORDS];
 
   memcpy(u, a, SIZE_BYTES);
+  du = deg(u);
 
   v[0] = 0x425;
   v[SIZE_WORDS - 1] = F571;
+  dv = deg(v);
+
   g[0] = 1;
 
 inv_loop:
@@ -119,19 +187,22 @@ inv_loop:
     goto inv_done;
   }
 inv_run:
-  if ((j = deg(u) - deg(v)) < 0) {
-    t = v;
-    v = u;
-    u = t; /* v <-> u */
-    t = g;
-    g = f;
-    f = t; /* g <-> f */
-    j = -j;
+  if (du < dv) {
+    t = v; v = u; u = t; /* v <-> u */
+    t = g; g = f; f = t; /* g <-> f */
+    dt=du; du=dv; dv=dt;
   }
-
+  j = du - dv; 
   memcpy(x, v, SIZE_BYTES);
   iLShiftN(x, SIZE_WORDS, j);
   polyAddTo(u, x); /* u = u + v>>j */
+  
+  for (dt=du/WORDSIZE; dt && !u[dt]; dt--)
+    ;
+  du = dt*WORDSIZE + __log2(u[dt]) + 1;
+# ifdef _DEBUG 
+  assert( du == deg(u) );
+# endif 
 
   memcpy(x, f, SIZE_BYTES);
   iLShiftN(x, SIZE_WORDS, j);
@@ -199,12 +270,18 @@ word *polyRand(word *p) {
   return p;
 }
 
-int deg(const word *a) {
-  word h;
-  int d = (SIZE_WORDS - 1) * WORDSIZE;
-  for (a += SIZE_WORDS - 1; d && !*a; a--) d -= WORDSIZE;
-  for (h = *a; h; h >>= 1) d++;
-  return d;
+unsigned int deg(const word *a) {
+  unsigned int d;
+  for (d=SIZE_WORDS-1; d && !a[d]; d--) 
+    ;
+#ifdef _DEBUG
+  unsigned int  log2 = 0;
+  unsigned int _log2 = __log2(a[d]);
+  for (word h = a[d]; h; h >>= 1) log2++;  
+  log2--;
+  assert(log2==_log2);
+#endif
+  return (d*WORDSIZE) + __log2(a[d]) + 1;
 }
 
 int polyIsZero(word *a) {

@@ -48,7 +48,8 @@ typedef uint8_t  byte;
 void iLShiftN(word *a, word s, word n);
 void iRShiftN(word *a, word s, word n);
 
-int      deg(const word *a);
+unsigned int deg(const word *a);
+
 int      polyIsZero(word *a);
 
 word*    polyAdd  (word* c, const word* a, const word* b);

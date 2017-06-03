@@ -196,7 +196,7 @@ word* pointMul_Naive(word* R, const word* k, const word* P) {
     word Q[SIZE_WORDS2];
     memcpy(Q,P,SIZE_BYTES2);
     pointZero(R);
-    for (int i=0;i<deg(k);i++) {
+    for (unsigned int i=0; i<deg(k); i++) {
         if ((k[i/WORDSIZE]>>(i%WORDSIZE))&1) 
             pointAdd(R,R,Q);
         pointDbl(Q,Q);
