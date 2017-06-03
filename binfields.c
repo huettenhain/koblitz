@@ -117,6 +117,12 @@ word *__reduce(word *c) {
   return c;
 }
 
+
+inline static void __shiftLeft(word *c) {
+  for (word *p=c+SIZE_WORDS2-1; p > c; p--)
+      *p = ((*p) << 1) | (*(p-1) >> (WORDSIZE-1));
+  *c <<= 1;
+}
 word *polyMul(word *r, const word *a, const word *b) {
   int k, j;
   word c[SIZE_WORDS2] = {0};
@@ -124,8 +130,7 @@ word *polyMul(word *r, const word *a, const word *b) {
   for (k = WORDSIZE - 1; k; k--) {
     for (j = 0; j < SIZE_WORDS; j++)
       if ((a[j] >> k) & 1) polyAddTo(&c[j], b);
-    polyLShift(c, SIZE_WORDS2, 1);
-    // TODO: possibly speed this up?
+    __shiftLeft(c);
   }
 
   for (j = 0; j < SIZE_WORDS; j++)
@@ -194,7 +199,7 @@ inv_run:
   }
   j = du - dv; 
   memcpy(x, v, SIZE_BYTES);
-  polyLShift(x, SIZE_WORDS, j);
+  polyLShift(x, j);
   polyAddTo(u, x); /* u = u + v>>j */
   
   for (dt=du/WORDSIZE; dt && !u[dt]; dt--)
@@ -205,7 +210,7 @@ inv_run:
 # endif 
 
   memcpy(x, f, SIZE_BYTES);
-  polyLShift(x, SIZE_WORDS, j);
+  polyLShift(x, j);
   polyAddTo(g, x); /* g = g + f>>j */
 
   goto inv_loop;
@@ -227,10 +232,10 @@ word *polyAdd(word *c, const word *a, const word *b) {
   return c;
 }
 
-void polyLShift(word *a, unsigned long s, unsigned long n) {
-  word x, *p = a + s - 1;
+void polyLShift(word *a, unsigned long n) {
+  word x, *p = a + SIZE_WORDS - 1;
   if ((x = n / WORDSIZE) != 0) {
-    memmove(a + x, a, (s - x) * sizeof(word));
+    memmove(a + x, a, (SIZE_WORDS - x) * sizeof(word));
     memset(a, 0, x * sizeof(word));
     a += x;
   }
