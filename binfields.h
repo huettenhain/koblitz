@@ -45,23 +45,24 @@ typedef uint8_t  byte;
 #define SIZE_WORDS2 (2*SIZE_WORDS)
 #define SIZE_BYTES2 (2*SIZE_BYTES)
 
-void iLShiftN(word *a, word s, word n);
-void iRShiftN(word *a, word s, word n);
+void     polyLShift(word *a, unsigned long size, unsigned long places);
+void     polyRShift(word *a, unsigned long size, unsigned long places);
 
-unsigned int deg(const word *a);
+unsigned int
+        polyDeg(const word *a);
 
-int      polyIsZero(word *a);
+int     polyIsZero(const word *a);
 
-word*    polyAdd  (word* c, const word* a, const word* b);
-word*    polyAddTo(word* a, const word* b);
+word*   polyAdd  (word* c, const word* a, const word* b);
+word*   polyAddTo(word* a, const word* b);
 
-word*    polySqr(word* c, const word* a);
-word*    polyMul(word* c, const word *a, const word *b); 
-word*    polyDiv(word* c, const word *a, const word *b);
-word*    polyInv(word *c, const word *a);
+word*   polySqr(word* c, const word* a);
+word*   polyMul(word* c, const word *a, const word *b); 
+word*   polyDiv(word* c, const word *a, const word *b);
+word*   polyInv(word *c, const word *a);
 
-word*    polyGen();
-word*    polyRand(word *p);
-word*    polyDup(word* a);
+word*   polyGen();
+word*   polyRand(word *p);
+word*   polyDup(word* a);
 
 #endif

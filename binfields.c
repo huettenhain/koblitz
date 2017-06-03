@@ -124,7 +124,7 @@ word *polyMul(word *r, const word *a, const word *b) {
   for (k = WORDSIZE - 1; k; k--) {
     for (j = 0; j < SIZE_WORDS; j++)
       if ((a[j] >> k) & 1) polyAddTo(&c[j], b);
-    iLShiftN(c, SIZE_WORDS2, 1);
+    polyLShift(c, SIZE_WORDS2, 1);
     // TODO: possibly speed this up?
   }
 
@@ -172,11 +172,11 @@ word *polyInv(word *r, const word *a) {
       *f = &x[4 * SIZE_WORDS];
 
   memcpy(u, a, SIZE_BYTES);
-  du = deg(u);
+  du = polyDeg(u);
 
   v[0] = 0x425;
   v[SIZE_WORDS - 1] = F571;
-  dv = deg(v);
+  dv = polyDeg(v);
 
   g[0] = 1;
 
@@ -194,18 +194,18 @@ inv_run:
   }
   j = du - dv; 
   memcpy(x, v, SIZE_BYTES);
-  iLShiftN(x, SIZE_WORDS, j);
+  polyLShift(x, SIZE_WORDS, j);
   polyAddTo(u, x); /* u = u + v>>j */
   
   for (dt=du/WORDSIZE; dt && !u[dt]; dt--)
     ;
   du = dt*WORDSIZE + __log2(u[dt]) + 1;
 # ifdef _DEBUG 
-  assert( du == deg(u) );
+  assert( du == polyDeg(u) );
 # endif 
 
   memcpy(x, f, SIZE_BYTES);
-  iLShiftN(x, SIZE_WORDS, j);
+  polyLShift(x, SIZE_WORDS, j);
   polyAddTo(g, x); /* g = g + f>>j */
 
   goto inv_loop;
@@ -227,7 +227,7 @@ word *polyAdd(word *c, const word *a, const word *b) {
   return c;
 }
 
-void iLShiftN(word *a, word s, word n) {
+void polyLShift(word *a, unsigned long s, unsigned long n) {
   word x, *p = a + s - 1;
   if ((x = n / WORDSIZE) != 0) {
     memmove(a + x, a, (s - x) * sizeof(word));
@@ -243,7 +243,7 @@ void iLShiftN(word *a, word s, word n) {
   }
 }
 
-void iRShiftN(word *a, word s, word n) {
+void polyRShift(word *a, unsigned long s, unsigned long n) {
   word x, *p = a + s - 1;
   if ((x = n / WORDSIZE) != 0) {
     memmove(a, a + x, (s - x) * sizeof(word));
@@ -270,7 +270,7 @@ word *polyRand(word *p) {
   return p;
 }
 
-unsigned int deg(const word *a) {
+unsigned int polyDeg(const word *a) {
   unsigned int d;
   for (d=SIZE_WORDS-1; d && !a[d]; d--) 
     ;
@@ -284,7 +284,7 @@ unsigned int deg(const word *a) {
   return (d*WORDSIZE) + __log2(a[d]) + 1;
 }
 
-int polyIsZero(word *a) {
+int polyIsZero(const word *a) {
   int cntr;
   for (cntr = 0; cntr < SIZE_WORDS; cntr++)
     if (a[cntr]) return 0;
